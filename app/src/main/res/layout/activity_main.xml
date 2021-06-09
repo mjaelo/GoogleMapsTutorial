@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <fragment
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/map"
@@ -71,10 +70,11 @@
         app:cardMaxElevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
+
         <Button
             android:id="@+id/button1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="77dp"
+            android:layout_height="77dp"
             android:layout_gravity="center"
             android:gravity="center"
             android:text="Save"

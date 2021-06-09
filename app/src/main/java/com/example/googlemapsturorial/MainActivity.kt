@@ -10,6 +10,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -37,19 +39,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
     private var locationArray: ArrayList<LatLng> = ArrayList()
     private var lineArray: ArrayList<Polyline> = ArrayList()
     private var speedArray: ArrayList<String> = ArrayList()
+    private var distanceArray: ArrayList<String> = ArrayList()
     private var here: LatLng = LatLng(-34.0, 151.0)
     private lateinit var speedText: TextView
     private lateinit var distanceText: TextView
     private var roadDistance = 0f
-    var filepath: String =
+    private var filePath: String =
         Environment.getExternalStorageDirectory().toString() + "/file.txt"
 
-    fun createfile() {
-        var fileContent = "location\t\tspeed\n"
-        for (i in 0..speedArray.size - 1) {
+    private fun createFile() {
+        var fileContent = "Location\t\tSpeed\t\tDistance\n"
+        for (i in 0 until speedArray.size) {
             fileContent += locationArray[i].toString() + "\t" + speedArray[i] + "\n"
         }
-        var myExternalFile = File(getExternalFilesDir(filepath), "fileName.txt")
+        val myExternalFile = File(getExternalFilesDir(filePath), "fileName.txt")
         try {
             val fileOutPutStream = FileOutputStream(myExternalFile)
             fileOutPutStream.write(fileContent.toByteArray())
@@ -62,6 +65,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater = menuInflater
+        inflater.inflate(R.menu.map_options, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        // Change the map type based on the user's selection.
+        R.id.normal_map -> {
+            mMap.mapType = GoogleMap.MAP_TYPE_NORMAL
+            true
+        }
+        R.id.hybrid_map -> {
+            mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
+            true
+        }
+        R.id.satellite_map -> {
+            mMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+            true
+        }
+        R.id.terrain_map -> {
+            mMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,11 +109,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
 
         //enable permissions
         requestPermissions(permissionArray, 1000)
+
         locationManagerEnabler()
         myButton.setOnClickListener {
             //zapisz do pliku
             if (locationArray.size > 0)
-                createfile()
+                createFile()
             else
                 Toast.makeText(this@MainActivity, "Empty", Toast.LENGTH_LONG).show()
         }
@@ -116,6 +146,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(here))
                     roadDistance += distance[0] / 1000
                     val tempDistance = (roadDistance * 1000).toInt().toFloat() / 1000
+                    distanceArray.add("$tempDistance KM")
                     distanceText.text = ("$tempDistance\nKM")
                     locationArray.add(here)
                     lineArray.add(
