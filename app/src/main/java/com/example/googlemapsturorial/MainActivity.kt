@@ -70,17 +70,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         var fileContent: ArrayList<List<String>> = ArrayList()
         fileContent.add(listOf("Location", "Speed", "Distance"))
         for (i in 0 until speedArray.size) {
-            fileContent.add(listOf(locationArray[i].toString(), speedArray[i],distanceArray[i]))
+            fileContent.add(listOf(locationArray[i].toString(), speedArray[i], distanceArray[i]))
         }
         val myExternalFile = File(getExternalFilesDir(filePath), "file.csv")
         try {
             val path =
-            csvWriter().writeAll(fileContent, myExternalFile.absolutePath)
-            Toast.makeText(this@MainActivity, myExternalFile.path + " created", Toast.LENGTH_LONG).show()
+                csvWriter().writeAll(fileContent, myExternalFile.absolutePath)
+            Toast.makeText(this@MainActivity, myExternalFile.path + " created", Toast.LENGTH_LONG)
+                .show()
         } catch (e: IOException) {
             Log.d(tagInfo, e.toString())
         }
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.map_options, menu)
@@ -111,29 +113,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         pegmanImgResource = resources.getIdentifier("@drawable/pegman", null, this.packageName)
         distanceText = findViewById(R.id.text_distance)
         distanceText.text = "$roadDistance\nKM"
         speedText = findViewById(R.id.text_speed)
         speedText.text = getString(R.string.speed_text).format(0.0f)
         val myButton: Button = findViewById(R.id.button1)
-
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
         //enable permissions
         requestPermissions(permissionArray, 1000)
-
         locationManagerEnabler()
         myButton.setOnClickListener {
-            //zapisz do pliku
-
-            if (locationArray.size > 0)
-            {
+            if (locationArray.size > 0) {
+                //zapisz do pliku
                 createFileTXT()
                 createFileCSV()
+                //reset programu
+                locationArray.clear()
+                speedArray.clear()
+                distanceArray.clear()
+                currentPositionMarker?.remove()
+                val iterator = lineArray.iterator()
+                iterator.forEach {
+                    it.remove()
+                }
             }
             else
                 Toast.makeText(this@MainActivity, "Empty", Toast.LENGTH_LONG).show()
@@ -150,54 +155,48 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        if (location != null) {
-            val before = here
-            here = LatLng(location.latitude, location.longitude)
-            if (currentPositionMarker != null) {
-                val distance = FloatArray(1)
-                Location.distanceBetween(
-                    here.latitude,
-                    here.longitude,
-                    before.latitude,
-                    before.longitude,
-                    distance
-                )
-                if (currentPositionMarker!!.position != here && distance[0] > 0.5) {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(here))
-                    roadDistance += distance[0] / 1000
-                    val tempDistance = (roadDistance * 1000).toInt().toFloat() / 1000
-                    distanceArray.add("$tempDistance KM")
-                    distanceText.text = ("$tempDistance\nKM")
-                    locationArray.add(here)
-                    lineArray.add(
-                        mMap.addPolyline(
-                            PolylineOptions()
-                                .color(Color.RED)
-                                .add(
-                                    locationArray[locationArray.size - 1],
-                                    locationArray[locationArray.size - 2]
-                                )
-                        )
-                    )
-                    currentPositionMarker!!.position = here
-
-                    location.speed *= 3.6f
-                    val tempSpeed = getString(R.string.speed_text).format(location.speed)
-                    speedText.text = tempSpeed
-                    speedArray.add(tempSpeed.replace("\n", ""))
-                }
-            } else {
-                currentPositionMarker = mMap.addMarker(
-                    MarkerOptions()
-                        .position(here).title("I'm here")
-                        .icon(BitmapDescriptorFactory.fromResource(pegmanImgResource))
-                )
+        val before = here
+        here = LatLng(location.latitude, location.longitude)
+        val distance = FloatArray(1)
+        Location.distanceBetween(
+            here.latitude,
+            here.longitude,
+            before.latitude,
+            before.longitude,
+            distance
+        )
+        if (locationArray.size != 0) {
+            if (currentPositionMarker!!.position != here && distance[0] > 0.5) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(here))
+                roadDistance += distance[0] / 1000
+                val tempDistance = (roadDistance * 1000).toInt().toFloat() / 1000
+                distanceArray.add("$tempDistance KM")
+                distanceText.text = ("$tempDistance\nKM")
                 locationArray.add(here)
-            }
-        } else
-            Log.d(tagInfo, "Location Not Found")
-    }
+                val prevHere = locationArray[locationArray.size - 2]
+                lineArray.add(
+                    mMap.addPolyline(
+                        PolylineOptions()
+                            .color(Color.RED)
+                            .add(here, prevHere)
+                    )
+                )
+                currentPositionMarker!!.position = here
 
+                location.speed *= 3.6f
+                val tempSpeed = getString(R.string.speed_text).format(location.speed)
+                speedText.text = tempSpeed
+                speedArray.add(tempSpeed.replace("\n", ""))
+            }
+        } else {
+            currentPositionMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(here).title("I'm here")
+                    .icon(BitmapDescriptorFactory.fromResource(pegmanImgResource))
+            )
+            locationArray.add(here)
+        }
+    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
