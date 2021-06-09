@@ -16,6 +16,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -45,12 +46,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
     private lateinit var distanceText: TextView
     private var roadDistance = 0f
     private var filePath: String =
-        Environment.getExternalStorageDirectory().toString() + "/file.txt"
+        Environment.getExternalStorageDirectory().toString()
 
-    private fun createFile() {
-        var fileContent = "Location\t\tSpeed\t\tDistance\n"
+    private fun createFileTXT() {
+        var fileContent = "Location\t\t\tSpeed\t\tDistance\n"
         for (i in 0 until speedArray.size) {
-            fileContent += locationArray[i].toString() + "\t" + speedArray[i] + "\n"
+            fileContent += locationArray[i].toString() + "\t" + speedArray[i] + "\t" + distanceArray[i] + "\n"
         }
         val myExternalFile = File(getExternalFilesDir(filePath), "fileName.txt")
         try {
@@ -65,6 +66,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         }
     }
 
+    private fun createFileCSV() {
+        var fileContent: ArrayList<List<String>> = ArrayList()
+        fileContent.add(listOf("Location", "Speed", "Distance"))
+        for (i in 0 until speedArray.size) {
+            fileContent.add(listOf(locationArray[i].toString(), speedArray[i],distanceArray[i]))
+        }
+        val myExternalFile = File(getExternalFilesDir(filePath), "file.csv")
+        try {
+            val path =
+            csvWriter().writeAll(fileContent, myExternalFile.absolutePath)
+            Toast.makeText(this@MainActivity, myExternalFile.path + " created", Toast.LENGTH_LONG).show()
+        } catch (e: IOException) {
+            Log.d(tagInfo, e.toString())
+        }
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.map_options, menu)
@@ -113,8 +129,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         locationManagerEnabler()
         myButton.setOnClickListener {
             //zapisz do pliku
+
             if (locationArray.size > 0)
-                createFile()
+            {
+                createFileTXT()
+                createFileCSV()
+            }
             else
                 Toast.makeText(this@MainActivity, "Empty", Toast.LENGTH_LONG).show()
         }
