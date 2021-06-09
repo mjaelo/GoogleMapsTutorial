@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GoogleMapsTurorial</string>
+    <string name="google_maps_key">AIzaSyBhhrrNEE29Dny4u82qj5JMyqNl5BK4hpg</string>
+    <string name="speed_text">%.1f\nKM/H</string>
+</resources>
